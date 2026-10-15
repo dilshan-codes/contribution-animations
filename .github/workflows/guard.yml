@@ -1,0 +1,74 @@
+name: guard
+
+on:
+  pull_request_target:
+    types: [opened, reopened, synchronize]
+
+permissions:
+  contents: read
+  pull-requests: read
+
+jobs:
+  guard:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      # No checkout on purpose: this job never touches the PR's code.
+      - uses: actions/github-script@v7
+        with:
+          script: |
+            const { owner, repo } = context.repo;
+            const pr = context.payload.pull_request;
+            const author = pr.user.login.toLowerCase();
+
+            if (author === owner.toLowerCase()) {
+              core.info('Repo owner - guard skipped.');
+              return;
+            }
+
+            const files = await github.paginate(github.rest.pulls.listFiles, {
+              owner, repo, pull_number: pr.number, per_page: 100,
+            });
+
+            const errors = [];
+            const slugs = new Set();
+            const ALLOWED = /^animations\/([a-z0-9-]+)\/(index\.js|meta\.json)$/;
+
+            if (files.length > 20) errors.push('Too many files changed (max 20).');
+
+            for (const f of files) {
+              if (f.status === 'removed' || f.status === 'renamed') {
+                errors.push(`${f.filename}: deleting or renaming files is owner-only.`);
+              }
+              for (const p of [f.filename, f.previous_filename].filter(Boolean)) {
+                const m = p.match(ALLOWED);
+                if (m) slugs.add(m[1]);
+                else errors.push(`${p}: only animations/<slug>/index.js and meta.json may be changed.`);
+              }
+            }
+
+            async function readMeta(o, r, ref, slug) {
+              try {
+                const res = await github.rest.repos.getContent({
+                  owner: o, repo: r, path: `animations/${slug}/meta.json`, ref,
+                });
+                return JSON.parse(Buffer.from(res.data.content, 'base64').toString('utf8'));
+              } catch (e) {
+                return null;
+              }
+            }
+
+            const head = pr.head.repo;
+            for (const slug of slugs) {
+              const baseMeta = await readMeta(owner, repo, pr.base.sha, slug);
+              if (baseMeta && String(baseMeta.author).toLowerCase() !== author) {
+                errors.push(`animations/${slug} belongs to ${baseMeta.author}; only they or the owner can change it.`);
+              }
+              const headMeta = head ? await readMeta(head.owner.login, head.name, pr.head.sha, slug) : null;
+              if (!headMeta || String(headMeta.author).toLowerCase() !== author) {
+                errors.push(`animations/${slug}/meta.json must exist and have "author": "${pr.user.login}".`);
+              }
+            }
+
+            if (errors.length) core.setFailed(errors.join('\n'));
+            else core.info('Guard passed.');
