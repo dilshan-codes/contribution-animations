@@ -1,0 +1,11 @@
+{
+  "name": "contribution-animations",
+  "private": true,
+  "type": "module",
+  "engines": { "node": ">=20" },
+  "scripts": {
+    "make-sample": "node scripts/make-sample.js",
+    "preview": "node scripts/preview.js",
+    "validate": "node scripts/validate-animations.js && node scripts/check-manifest.js"
+  }
+}
