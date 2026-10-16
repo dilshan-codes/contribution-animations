@@ -1,12 +1,14 @@
 import { readdirSync, readFileSync, writeFileSync, rmSync, lstatSync, existsSync } from 'node:fs';
+import path from 'node:path';
 import { findProblems } from '../core/safety.js';
 
+const DIST = process.env.DIST || 'dist';
 const MAX = 500 * 1024;
 const clean = (s, n) => String(s ?? '').replace(/[^\p{L}\p{N} .,'!?-]/gu, '').slice(0, n);
 const entries = [];
 
-for (const f of readdirSync('dist')) {
-  const p = `dist/${f}`;
+for (const f of readdirSync(DIST)) {
+  const p = path.join(DIST, f);
   const slug = f.replace(/\.svg$/, '');
   let keep = /^[a-z0-9-]+\.svg$/.test(f) && lstatSync(p).isFile() && existsSync(`animations/${slug}/meta.json`);
   let meta;
@@ -24,9 +26,11 @@ for (const f of readdirSync('dist')) {
   });
 }
 
-entries.sort((a, b) => a.slug.localeCompare(b.slug));
-const body = entries.map((e) =>
-  `### ${e.name}\n${e.author ? `by [@${e.author}](https://github.com/${e.author})\n` : ''}\n${e.description}\n\n![${e.name}](./${e.slug}.svg)\n`
-).join('\n');
-writeFileSync('dist/README.md', `# Animation gallery\n\nGenerated automatically from a real contribution graph.\n\n${body}`);
+if (process.env.GALLERY !== '0') {
+  entries.sort((a, b) => a.slug.localeCompare(b.slug));
+  const body = entries.map((e) =>
+    `### ${e.name}\n${e.author ? `by [@${e.author}](https://github.com/${e.author})\n` : ''}\n${e.description}\n\n![${e.name}](./${e.slug}.svg)\n`
+  ).join('\n');
+  writeFileSync(path.join(DIST, 'README.md'), `# Animation gallery\n\nGenerated automatically from a real contribution graph.\n\n${body}`);
+}
 console.log(`Published ${entries.length} animations`);

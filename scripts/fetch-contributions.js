@@ -7,6 +7,8 @@ if (!login || !token) {
   process.exit(1);
 }
 
+if (!/^[A-Za-z0-9-]{1,39}$/.test(login)) { console.error('Invalid GitHub username'); process.exit(1); }
+
 const query = `query($login:String!){user(login:$login){contributionsCollection{contributionCalendar{weeks{contributionDays{date contributionCount contributionLevel}}}}}}`;
 
 const res = await fetch('https://api.github.com/graphql', {
@@ -34,5 +36,5 @@ const data = {
     })),
   })),
 };
-writeFileSync('data.json', JSON.stringify(data));
+writeFileSync(process.env.OUT || 'data.json', JSON.stringify(data));
 console.log(`Fetched ${data.weeks.length} weeks`);
