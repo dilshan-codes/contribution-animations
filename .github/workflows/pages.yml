@@ -1,0 +1,80 @@
+name: pages
+
+on:
+  schedule:
+    - cron: "30 */6 * * *"
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths: ["animations/**", "core/**", "scripts/**", "site/**"]
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+permissions: {}
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      # Runs contributor code: no token, read-only filesystem except dist
+      - run: |
+          mkdir -p dist
+          node --permission \
+            --allow-fs-read="$GITHUB_WORKSPACE" \
+            --allow-fs-write="$GITHUB_WORKSPACE/dist" \
+            scripts/build-all.js core/sample-data.json
+      - uses: actions/upload-artifact@v4
+        with:
+          name: svgs
+          path: dist/*.svg
+
+  site:
+    needs: build
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - uses: actions/download-artifact@v4
+        with:
+          name: svgs
+          path: dist
+      - run: node scripts/finalize.js
+        env:
+          GALLERY: "0"
+      - run: node scripts/make-site.js
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
+
+  deploy:
+    needs: site
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4
