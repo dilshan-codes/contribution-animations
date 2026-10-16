@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; img-src 'self'; script-src 'self'; style-src 'self'; connect-src 'self'; base-uri 'none'; form-action 'none'">
+  <title>Contribution Animations</title>
+  <meta name="description" content="Animated SVGs of your real GitHub contribution graph. Pick one and add it to your profile.">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header>
+    <h1>Contribution Animations</h1>
+    <p>Animated versions of your real GitHub contribution graph. Pick one, copy two snippets, done. No fake commits, no personal data.</p>
+    <input id="search" type="search" placeholder="Search by name, description or author" aria-label="Search animations">
+  </header>
+
+  <main>
+    <p id="count" role="status"></p>
+    <div id="grid"></div>
+  </main>
+
+  <footer>
+    <a id="repo-link" href="#">Source on GitHub</a> · Previews use sample data
+  </footer>
+
+  <dialog id="dialog" aria-labelledby="d-title">
+    <div class="inner">
+      <button id="close" class="close" aria-label="Close">&times;</button>
+      <h2 id="d-title"></h2>
+      <p id="d-meta" class="muted"></p>
+      <img id="d-img" alt="">
+
+      <ol class="steps">
+        <li>
+          <h3>Create your profile repository</h3>
+          <p>Make a public repo named exactly like your GitHub username, with a <code>README.md</code>.</p>
+        </li>
+        <li>
+          <h3>Add the workflow</h3>
+          <p>Create <code>.github/workflows/contribution-animation.yml</code> in that repo:</p>
+          <pre id="s-workflow"></pre>
+          <button class="copy" data-copy="s-workflow">Copy</button>
+        </li>
+        <li>
+          <h3>Run it once</h3>
+          <p>Open the repo's <b>Actions</b> tab, choose <b>Contribution animation</b>, press <b>Run workflow</b>. When it finishes, an <code>output</code> branch holds your SVG.</p>
+        </li>
+        <li>
+          <h3>Add it to your profile README</h3>
+          <label>Your GitHub username
+            <input id="username" autocomplete="off" spellcheck="false" placeholder="USERNAME">
+          </label>
+          <p class="muted">Used only to fill in the snippet. It never leaves your browser.</p>
+          <pre id="s-readme"></pre>
+          <button class="copy" data-copy="s-readme">Copy</button>
+        </li>
+      </ol>
+      <p class="muted">The 🔄 link opens your workflow page, where <b>Run workflow</b> refreshes the image. It also updates by itself every 12 hours.</p>
+    </div>
+  </dialog>
+
+  <script src="app.js"></script>
+</body>
+</html>
