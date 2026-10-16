@@ -1,0 +1,73 @@
+name: Contribution Animations
+description: Animated SVGs of your real GitHub contribution graph. No fake commits, no personal data.
+branding:
+  icon: activity
+  color: green
+
+inputs:
+  user:
+    description: GitHub username to draw (defaults to the owner of the repo running the workflow)
+    default: ${{ github.repository_owner }}
+  animations:
+    description: Comma-separated animation names, or "all"
+    default: snake
+  token:
+    description: Token used to read public contributions and publish the output branch
+    default: ${{ github.token }}
+  branch:
+    description: Branch the SVG files are published to
+    default: output
+
+runs:
+  using: composite
+  steps:
+    - uses: actions/setup-node@v4
+      with:
+        node-version: 24
+
+    - name: Fetch contributions (trusted code, has the token)
+      shell: bash
+      working-directory: ${{ github.action_path }}
+      env:
+        LOGIN: ${{ inputs.user }}
+        GITHUB_TOKEN: ${{ inputs.token }}
+        OUT: ${{ runner.temp }}/ca/data.json
+      run: |
+        mkdir -p "$RUNNER_TEMP/ca/dist"
+        node scripts/fetch-contributions.js
+
+    - name: Build animations (no token, sandboxed)
+      shell: bash
+      working-directory: ${{ github.action_path }}
+      env:
+        ACTION_DIR: ${{ github.action_path }}
+        DIST: ${{ runner.temp }}/ca/dist
+        ONLY: ${{ inputs.animations }}
+      run: |
+        node --permission \
+          --allow-fs-read="$ACTION_DIR" \
+          --allow-fs-read="$RUNNER_TEMP/ca" \
+          --allow-fs-write="$RUNNER_TEMP/ca/dist" \
+          scripts/build-all.js "$RUNNER_TEMP/ca/data.json"
+
+    - name: Re-scan outputs (trusted code, never runs animations)
+      shell: bash
+      working-directory: ${{ github.action_path }}
+      env:
+        DIST: ${{ runner.temp }}/ca/dist
+        GALLERY: "0"
+      run: node scripts/finalize.js
+
+    - name: Publish
+      shell: bash
+      working-directory: ${{ runner.temp }}/ca/dist
+      env:
+        GH_TOKEN: ${{ inputs.token }}
+        BRANCH: ${{ inputs.branch }}
+      run: |
+        git init -q -b "$BRANCH"
+        git config user.name "github-actions[bot]"
+        git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+        git add .
+        git commit -q -m "chore: update animations"
+        git push -q --force "https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" "$BRANCH"
