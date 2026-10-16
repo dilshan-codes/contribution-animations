@@ -4,6 +4,9 @@ Anyone can add an animation. Pull requests that pass the automatic checks are me
 
 ## Add your animation
 
+Use `svgWrap` from `core/grid.js` and give shapes `class="c0"` to `class="c4"`.
+That gives you GitHub's real colours in both light and dark mode.
+
 1. Fork this repo.
 2. Create `animations/<your-slug>/` (lowercase letters, numbers, dashes).
 3. Add two files:
