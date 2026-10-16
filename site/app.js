@@ -6,7 +6,7 @@ let repo = '', all = [], current = null;
 const workflow = (slug) => `name: Contribution animation
 on:
   schedule:
-    - cron: "0 */12 * * *"
+    - cron: "17 3 * * *"
   workflow_dispatch:
 permissions:
   contents: write
@@ -21,8 +21,6 @@ jobs:
 `;
 
 const readme = (slug, u) => `![contribution animation](https://raw.githubusercontent.com/${u}/${u}/output/${slug}.svg)
-
-[🔄 Update animation](https://github.com/${u}/${u}/actions/workflows/contribution-animation.yml)
 `;
 
 // Everything from animations.json is shown with textContent, never as HTML.

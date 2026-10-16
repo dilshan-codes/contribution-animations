@@ -17,7 +17,7 @@ Animated SVG styles for your real GitHub contribution graph. No fake commits, no
 name: Contribution animation
 on:
   schedule:
-    - cron: "0 */12 * * *"
+    - cron: "17 3 * * *"
   workflow_dispatch:
 permissions:
   contents: write
@@ -37,7 +37,6 @@ jobs:
 ```markdown
 ![contribution animation](https://raw.githubusercontent.com/USERNAME/USERNAME/output/snake.svg)
 
-[🔄 Update animation](https://github.com/USERNAME/USERNAME/actions/workflows/contribution-animation.yml)
 ```
 
-The update link opens your workflow page, where **Run workflow** refreshes the image. It also refreshes by itself every 12 hours. Use `animations: all` to build every style, then point the image at `<name>.svg`.
+It also refreshes by itself every 24 hours. Use `animations: all` to build every style, then point the image at `<name>.svg`.
