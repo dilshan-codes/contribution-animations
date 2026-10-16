@@ -1,1 +1,1 @@
-{ "required": ["ripple"] }
+{ "required": ["ripple", "snake"] }

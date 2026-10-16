@@ -1,0 +1,5 @@
+{
+  "name": "Snake",
+  "author": "dilshan-codes",
+  "description": "A snake zig-zags through the graph and eats every active cell."
+}
